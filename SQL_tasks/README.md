@@ -14,41 +14,41 @@
 Задания:
 1. Вывести список сотрудников в формате : Сотрудник, Отдел сотрудника, Руководитель, Отдел руководителя
 
-SELECT e.NAME as employee_name, d.NAME as employee_department_name, ec.NAME as chief_name, dc.NAME as chief_department_name
-FROM EMPLOYEE e join DEPARTMENT d ON d.ID = e.DEPARTMENT_ID
-join EMPLOYEE ec ON e.CHIEF_ID = ec.ID
+SELECT e.NAME as employee_name, d.NAME as employee_department_name, ec.NAME as chief_name, dc.NAME as chief_department_name  
+FROM EMPLOYEE e join DEPARTMENT d ON d.ID = e.DEPARTMENT_ID  
+join EMPLOYEE ec ON e.CHIEF_ID = ec.ID  
 join DEPARTMENT dc ON ec.department_id = dc.ID;
 
 
 2. Вывести список сотрудников, получающих заработную плату, большую чем у непосредственного руководителя
 
-SELECT e.NAME as employee_name, e.SALARY as employee_salary, c.NAME as chief_name, c.SALARY as chief_salary
-FROM EMPLOYEE e join EMPLOYEE c ON e.CHIEF_ID = c.ID
+SELECT e.NAME as employee_name, e.SALARY as employee_salary, c.NAME as chief_name, c.SALARY as chief_salary  
+FROM EMPLOYEE e join EMPLOYEE c ON e.CHIEF_ID = c.ID  
 WHERE e.SALARY > c.SALARY;
 
 
 3. Вывести список сотрудников, получающих максимальную заработную плату в своем отделе
 
-with chief_t as 
-(SELECT DEPARTMENT_ID, max(SALARY) as max_salary FROM EMPLOYEE GROUP BY DEPARTMENT_ID)
-SELECT e.NAME as name_employee, d.NAME as name_department, ct.max_salary
-FROM EMPLOYEE e join DEPARTMENT d ON d.ID = e.DEPARTMENT_ID join chief_t ct ON e.DEPARTMENT_ID = ct.department_id
+with chief_t as  
+(SELECT DEPARTMENT_ID, max(SALARY) as max_salary FROM EMPLOYEE GROUP BY DEPARTMENT_ID)  
+SELECT e.NAME as name_employee, d.NAME as name_department, ct.max_salary  
+FROM EMPLOYEE e join DEPARTMENT d ON d.ID = e.DEPARTMENT_ID join chief_t ct ON e.DEPARTMENT_ID = ct.department_id  
 WHERE e.salary = ct.max_salary;
 
 
 4. Вывести список ID отделов, количество сотрудников в которых не превышает 3 человек
 
-SELECT distinct DEPARTMENT_ID, count(ID) as count_employees
-FROM EMPLOYEE
-GROUP BY DEPARTMENT_ID
+SELECT distinct DEPARTMENT_ID, count(ID) as count_employees  
+FROM EMPLOYEE  
+GROUP BY DEPARTMENT_ID  
 HAVING COUNT(ID) <= 3;
 
 
 5. Вывести список сотрудников, не имеющих назначенного руководителя, работающего в том же отделе
 
-SELECT distinct NAME
-FROM EMPLOYEE 
-WHERE CHIEF_ID is NULL
+SELECT distinct NAME  
+FROM EMPLOYEE   
+WHERE CHIEF_ID is NULL  
 GROUP BY NAME;
 
 
@@ -56,21 +56,21 @@ GROUP BY NAME;
 
 with tab_salary as (SELECT DISTINCT DEPARTMENT_ID as department_id, SUM(salary) OVER (PARTITION BY department_id) as sum_salary FROM EMPLOYEE)
 
-SELECT d.NAME as name_department, s.sum_salary
-FROM tab_salary s join DEPARTMENT d on d.ID = s.department_id
-GROUP BY d.NAME, s.sum_salary
-ORDER BY s.sum_salary DESC
+SELECT d.NAME as name_department, s.sum_salary  
+FROM tab_salary s join DEPARTMENT d on d.ID = s.department_id  
+GROUP BY d.NAME, s.sum_salary  
+ORDER BY s.sum_salary DESC  
 LIMIT 5;
 
 
 7. Вывести ФИО сотрудника(ов), получающего третью по величине зарплату в организации
 
-with tab_rank_salary as 
-(SELECT NAME as employee_name, SALARY, RANK() OVER (ORDER BY SALARY DESC) AS rank_each_salary
-FROM EMPLOYEE
-SELECT employee_name
-FROM tab_rank_salary rs
-WHERE rs.rank_each_salary = 3;
+with tab_rank_salary as  
+(SELECT NAME as employee_name, SALARY, RANK() OVER (ORDER BY SALARY DESC) AS rank_each_salary  
+FROM EMPLOYEE  
+SELECT employee_name  
+FROM tab_rank_salary rs  
+WHERE rs.rank_each_salary = 3;  
 
 
 # Задания по поиску информации для SQL
@@ -92,17 +92,17 @@ WHERE rs.rank_each_salary = 3;
 1. Поле MR_REQUEST_ID поменять на формат без приставки S8:
      пример: 1-52JK8J
 Решение:
-SELECT CONCAT(SUBSTRING(MR_REQUEST_ID, 3, LENGTH(MR_REQUEST_ID))) as request_id
+SELECT CONCAT(SUBSTRING(MR_REQUEST_ID, 3, LENGTH(MR_REQUEST_ID))) as request_id  
 FROM tab
 
 2. Поле MOB_NUM - является числом, и необходимо преобразовать его в текстовое и заменить последние 3 цифры на '999'
      пример: 9166104999
 Решение:
-SELECT CAST(CONCAT(SUBSTRING(MOB_NUM, 1, LENGTH(MOB_NUM) - 3), '999') as VARCHAR)
+SELECT CAST(CONCAT(SUBSTRING(MOB_NUM, 1, LENGTH(MOB_NUM) - 3), '999') as VARCHAR)  
 FROM tab
 
 3. Поле CREDIT_SUM_REQ перевести в тысячи с округлением до целого значения вверх.
      пример: 140500 преобразуется в 141
 Решение:
-SELECT ceil(CREDIT_SUM_REQ/1000.0) as round_credit_sum
+SELECT ceil(CREDIT_SUM_REQ/1000.0) as round_credit_sum  
 FROM tab
