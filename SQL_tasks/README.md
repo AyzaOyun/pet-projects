@@ -1,4 +1,5 @@
 # SQL-задачи
+
 В нашем распоряжении 2 таблицы.  
 В таблице "DEPARTMENT" есть столбцы:
 - ID (NUMBER) <pk>;
@@ -11,7 +12,7 @@
 - NAME (VARCHAR2);
 - SALARY (NUMBER).
 
-Задания:
+##### Задания:
 1. Вывести список сотрудников в формате : Сотрудник, Отдел сотрудника, Руководитель, Отдел руководителя
 
 SELECT e.NAME as employee_name, d.NAME as employee_department_name, ec.NAME as chief_name, dc.NAME as chief_department_name  
@@ -88,21 +89,65 @@ WHERE rs.rank_each_salary = 3;
 | 9| S8:1-13A1Z5H| 9031448083| 385000|
 | 10| S8:1-292D62YS| 9001031227| 300000|
 
-Задания:
+#### Задания:
 1. Поле MR_REQUEST_ID поменять на формат без приставки S8:
      пример: 1-52JK8J
-Решение:
+##### Решение:
 SELECT CONCAT(SUBSTRING(MR_REQUEST_ID, 3, LENGTH(MR_REQUEST_ID))) as request_id  
 FROM tab
 
 2. Поле MOB_NUM - является числом, и необходимо преобразовать его в текстовое и заменить последние 3 цифры на '999'
      пример: 9166104999
-Решение:
+##### Решение:
 SELECT CAST(CONCAT(SUBSTRING(MOB_NUM, 1, LENGTH(MOB_NUM) - 3), '999') as VARCHAR)  
 FROM tab
 
 3. Поле CREDIT_SUM_REQ перевести в тысячи с округлением до целого значения вверх.
      пример: 140500 преобразуется в 141
-Решение:
+##### Решение:
 SELECT ceil(CREDIT_SUM_REQ/1000.0) as round_credit_sum  
 FROM tab
+
+
+## Задачи (синтаксис MySQL)
+![схема3](https://github.com/AyzaOyun/pet-projects/assets/144170277/ed5dbc0f-5438-4483-a622-53ba049a95b4)
+
+#### Задача 1
+Требуется написать запрос (SELECT), который вернет результаты по КОЛИЧЕСТВУ (amount) покупок товаров всеми членами семьи в разрезе кварталов (в данной песочнице представлены данные только за 2005 год). 
+
+##### Решение:
+with t1 as (SELECT fm.member_name as Name, g.good_name as Good, SUM(p.amount) as total_amount, EXTRACT(QUARTER from p.date) as q
+FROM Goods g INNER JOIN Payments p on g.good_id = p.good INNER JOIN FamilyMembers fm on p.family_member = fm.member_id
+WHERE p.date BETWEEN '2005-01-01' AND '2006-01-01'
+GROUP BY fm.member_name, g.good_name, q
+ORDER BY fm.member_name, g.good_name, q)
+
+SELECT Name, Good, 
+CASE WHEN q = 1 THEN total_amount ELSE 0 END as q1,
+CASE WHEN q = 2 THEN total_amount ELSE 0 END as q2,
+CASE WHEN q = 3 THEN total_amount ELSE 0 END as q3,
+CASE WHEN q = 4 THEN total_amount ELSE 0 END as q4
+FROM t1
+
+
+#### Задача 2
+Измените запрос так, чтобы показать 5 лучших продуктов, которые принесли больше всего денег (имели наивысшую совокупную стоимость) в отчетном году. Отобразите ранг результата по продуктам и расположите их в порядке убывания стоимости так, чтобы ранг 1 имел продукт с максимальной стоимостью и т.д.
+
+##### Решение:
+with t1 as (SELECT fm.member_name as Name, g.good_name as Good, SUM(p.unit_price*p.amount) as price, SUM(amount) as total_amount, EXTRACT(QUARTER from p.date) as q  
+FROM Goods g INNER JOIN Payments p on g.good_id = p.good INNER JOIN FamilyMembers fm on p.family_member = fm.member_id  
+WHERE p.date BETWEEN '2005-01-01' AND '2006-01-01'  
+GROUP BY fm.member_name, g.good_name, q  
+ORDER BY fm.member_name, g.good_name, q),  
+
+t2 as (SELECT Good,   
+CASE WHEN q = 1 THEN price ELSE 0 END as q1,  
+CASE WHEN q = 2 THEN price ELSE 0 END as q2,  
+CASE WHEN q = 3 THEN price ELSE 0 END as q3,  
+CASE WHEN q = 4 THEN price ELSE 0 END as q4,  
+SUM(price) OVER (PARTITION BY Good, q) AS total_year  
+FROM t1)  
+
+SELECT Good, q1, q2, q3, q4, total_year, RANK() OVER (ORDER BY total_year DESC) as Rank_  
+FROM t2  
+LIMIT 5  
